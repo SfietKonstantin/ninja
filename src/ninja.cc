@@ -997,7 +997,7 @@ int ReadFlags(int* argc, char*** argv,
 
   int opt;
   while (!options->tool &&
-         (opt = getopt_long(*argc, *argv, "d:f:j:k:l:nt:vw:C:h", kLongOptions,
+         (opt = getopt_long(*argc, *argv, "d:f:j:k:l:nrt:vw:C:h", kLongOptions,
                             NULL)) != -1) {
     switch (opt) {
       case 'd':
@@ -1037,6 +1037,9 @@ int ReadFlags(int* argc, char*** argv,
       }
       case 'n':
         config->dry_run = true;
+        break;
+      case 'r':
+        config->recompute_deps = true;
         break;
       case 't':
         options->tool = ChooseTool(optarg);
@@ -1131,7 +1134,7 @@ int real_main(int argc, char** argv) {
     if (ninja.RebuildManifest(options.input_file, &err)) {
       // In dry_run mode the regeneration will succeed without changing the
       // manifest forever. Better to return immediately.
-      if (config.dry_run)
+      if (config.dry_run || config.recompute_deps)
         return 0;
       // Start the build over with the new manifest.
       continue;

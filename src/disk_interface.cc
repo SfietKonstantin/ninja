@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -251,6 +252,14 @@ int RealDiskInterface::RemoveFile(const string& path) {
   } else {
     return 0;
   }
+}
+
+bool RealDiskInterface::Touch(const string& path) {
+  if (utimensat(AT_FDCWD, path.c_str(), NULL, 0)) {
+    Error("touch(%s): %s", path.c_str(), strerror(errno));
+    return false;
+  }
+  return true;
 }
 
 void RealDiskInterface::AllowStatCache(bool allow) {

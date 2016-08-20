@@ -69,6 +69,24 @@ bool DryRunCommandRunner::WaitForCommand(Result* result) {
    return true;
 }
 
+struct RefreshCommandRunner : public DryRunCommandRunner {
+  explicit RefreshCommandRunner(DiskInterface *disk_interface);
+  virtual bool StartCommand(Edge* edge);
+  DiskInterface *disk_interface_;
+};
+
+RefreshCommandRunner::RefreshCommandRunner(DiskInterface *disk_interface)
+    : disk_interface_(disk_interface) {
+}
+
+bool RefreshCommandRunner::StartCommand(Edge* edge) {
+  for (vector<Node*>::iterator o = edge->outputs_.begin();
+       o != edge->outputs_.end(); ++o) {
+    disk_interface_->Touch((*o)->path());
+  }
+  return DryRunCommandRunner::StartCommand(edge);
+}
+
 }  // namespace
 
 BuildStatus::BuildStatus(const BuildConfig& config)
@@ -646,6 +664,8 @@ bool Builder::Build(string* err) {
   if (!command_runner_.get()) {
     if (config_.dry_run)
       command_runner_.reset(new DryRunCommandRunner);
+    else if (config_.recompute_deps)
+      command_runner_.reset(new RefreshCommandRunner(disk_interface_));
     else
       command_runner_.reset(new RealCommandRunner(config_));
   }
